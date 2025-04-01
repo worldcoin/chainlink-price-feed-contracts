@@ -1,0 +1,149 @@
+// SPDX-License-Identifier: MIT
+pragma solidity >=0.8.28;
+
+interface IVerifierProxy {
+    function verify(bytes memory payload, bytes memory parameterPayload) external returns (bytes memory);
+}
+
+/**
+ * @title PriceFeedStorage
+ * @dev Contract for storing and updating price feed data for a single asset pair
+ */
+contract ChainlinkPriceFeed {
+    error InvalidParameter(string parameterName);
+    error FeedIdMismatch();
+    error PriceDataInvalid();
+    error PriceFeedNotAvailable();
+    error PriceFeedExpired();
+    error OldPriceFeedUpdate();
+    error InvalidPriceFeedVersion(uint16 version);
+
+    struct PriceFeedData {
+        int192 price;
+        uint32 timestamp;
+        uint32 expiresAt;
+    }
+
+    // Address of the pair token (always the first token in the pair)
+    address public immutable PAIR_TOKEN_ADDRESS;
+
+    // Address of the USDC token (always the second token in the pair)
+    address public immutable USDC_TOKEN_ADDRESS;
+
+    // Address of the VerifierProxy contract
+    address public immutable VERIFIER_PROXY_ADDRESS;
+
+    // The unique identifier for this price feed
+    bytes32 public immutable FEED_ID;
+
+    // Human-readable name of the pair (e.g., "WLD/USD")
+    string public PAIR_NAME;
+
+    // Expected version of the report
+    uint16 public immutable EXPECTED_VERSION = 3;
+
+    // Price feed data for the single pair
+    PriceFeedData public priceFeed;
+
+    event AnswerUpdated(int256 indexed current, uint256 indexed roundId, uint256 updatedAt);
+
+    /**
+     * @dev Constructor to set the USDC address, Pair Token address, VerifierProxy address, feed ID and pair name
+     * @param _pairAddress The address of the pair token token
+     * @param _usdcAddress The address of the USDC token
+     * @param _verifierProxyAddress The address of the VerifierProxy contract
+     * @param _feedId The unique identifier for this price feed
+     * @param _pairName Human-readable name of the pair (e.g., "ETH/USD")
+     */
+    constructor(
+        address _pairAddress,
+        address _usdcAddress,
+        address _verifierProxyAddress,
+        bytes32 _feedId,
+        string memory _pairName
+    ) {
+        if (_usdcAddress == address(0)) revert InvalidParameter("USDC_Address");
+        if (_pairAddress == address(0)) revert InvalidParameter("Pair_Token_Address");
+        if (_verifierProxyAddress == address(0)) revert InvalidParameter("Verifier_Proxy");
+        if (_feedId == bytes32(0)) revert InvalidParameter("Feed_Id");
+        if (bytes(_pairName).length == 0) revert InvalidParameter("Pair_Name");
+
+        USDC_TOKEN_ADDRESS = _usdcAddress;
+        PAIR_TOKEN_ADDRESS = _pairAddress;
+        VERIFIER_PROXY_ADDRESS = _verifierProxyAddress;
+        FEED_ID = _feedId;
+        PAIR_NAME = _pairName;
+    }
+
+    function updatePriceData(
+        bytes memory verifyReportRequest,
+        bytes memory parameterPayload
+    )
+        public
+        returns (bytes memory)
+    {
+        bytes memory returnDataCall =
+            IVerifierProxy(VERIFIER_PROXY_ADDRESS).verify(verifyReportRequest, parameterPayload);
+
+        // Decode the return data into the specified structure
+        (
+            bytes32 receivedFeedId,
+            uint32 validFromTimestamp,
+            uint32 observationsTimestamp,
+            ,
+            ,
+            uint32 expiresAt,
+            int192 price,
+            ,
+        ) = abi.decode(returnDataCall, (bytes32, uint32, uint32, uint192, uint192, uint32, int192, int192, int192));
+
+        // Decode the reportData from verifyReportRequest
+        (, bytes memory reportData) = abi.decode(verifyReportRequest, (bytes32[3], bytes));
+
+        // Extract report version from reportData
+        uint16 reportVersion = (uint16(uint8(reportData[0])) << 8) | uint16(uint8(reportData[1]));
+
+        if (reportVersion != EXPECTED_VERSION) revert InvalidPriceFeedVersion(reportVersion);
+
+        // Don't allow updating to an old price
+        if (observationsTimestamp <= priceFeed.timestamp) revert OldPriceFeedUpdate();
+
+        // Verify that the feed ID matches the contract's feed ID
+        if (receivedFeedId != FEED_ID) revert FeedIdMismatch();
+
+        // Validate the expiration times
+        if (block.timestamp < validFromTimestamp || block.timestamp > expiresAt) revert PriceDataInvalid();
+
+        // Store the price feed data
+        priceFeed = PriceFeedData({ price: price, timestamp: observationsTimestamp, expiresAt: expiresAt });
+
+        emit AnswerUpdated(price, block.timestamp, block.timestamp);
+
+        return returnDataCall;
+    }
+
+    /**
+     * @dev Get the latest price feed data
+     * @return roundId The round ID
+     * @return answer The latest price
+     * @return startedAt The timestamp when the round started
+     * @return updatedAt The timestamp of the latest update
+     * @return answeredInRound The round ID in which the answer was computed
+     */
+    function latestRoundData()
+        external
+        view
+        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+    {
+        if (priceFeed.timestamp == 0) revert PriceFeedNotAvailable();
+        if (block.timestamp > priceFeed.expiresAt) revert PriceFeedExpired();
+
+        roundId = priceFeed.timestamp;
+        answer = priceFeed.price;
+        startedAt = priceFeed.timestamp;
+        updatedAt = priceFeed.timestamp;
+        answeredInRound = priceFeed.timestamp;
+
+        return (roundId, answer, startedAt, updatedAt, answeredInRound);
+    }
+}
