@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.28;
 
-interface IVerifierProxy {
-    function verify(bytes memory payload, bytes memory parameterPayload) external returns (bytes memory);
-}
+import { IVerifierProxy } from "./interfaces/IVerifierProxy.sol";
 
 /**
  * @title PriceFeedStorage
@@ -31,7 +29,7 @@ contract ChainlinkPriceFeed {
     address public immutable USDC_TOKEN_ADDRESS;
 
     // Address of the VerifierProxy contract
-    address public immutable VERIFIER_PROXY_ADDRESS;
+    IVerifierProxy public VERIFIER_PROXY;
 
     // The unique identifier for this price feed
     bytes32 public immutable FEED_ID;
@@ -58,7 +56,7 @@ contract ChainlinkPriceFeed {
     constructor(
         address _pairAddress,
         address _usdcAddress,
-        address _verifierProxyAddress,
+        address payable _verifierProxyAddress,
         bytes32 _feedId,
         string memory _pairName
     ) {
@@ -70,20 +68,29 @@ contract ChainlinkPriceFeed {
 
         USDC_TOKEN_ADDRESS = _usdcAddress;
         PAIR_TOKEN_ADDRESS = _pairAddress;
-        VERIFIER_PROXY_ADDRESS = _verifierProxyAddress;
+        VERIFIER_PROXY = IVerifierProxy(_verifierProxyAddress);
         FEED_ID = _feedId;
         PAIR_NAME = _pairName;
     }
 
     function updatePriceData(
-        bytes memory verifyReportRequest,
+        bytes memory verifySignedReportRequest,
         bytes memory parameterPayload
     )
         public
         returns (bytes memory)
     {
-        bytes memory returnDataCall =
-            IVerifierProxy(VERIFIER_PROXY_ADDRESS).verify(verifyReportRequest, parameterPayload);
+        // Decode the reportData from verifySignedReportRequest
+        (, bytes memory reportData) = abi.decode(verifySignedReportRequest, (bytes32[3], bytes));
+
+        // Extract report version from reportData
+        uint16 reportVersion = (uint16(uint8(reportData[0])) << 8) | uint16(uint8(reportData[1]));
+
+        if (reportVersion != EXPECTED_VERSION) revert InvalidPriceFeedVersion(reportVersion);
+
+        // @dev - Value should be the nativeFee required to verify the reportData on-chain
+        // We're passing 0 here just for testing purpose, make sure to adapt to your case.
+        bytes memory returnDataCall = VERIFIER_PROXY.verify{ value: 0 }(verifySignedReportRequest, parameterPayload);
 
         // Decode the return data into the specified structure
         (
@@ -96,14 +103,6 @@ contract ChainlinkPriceFeed {
             int192 price,
             ,
         ) = abi.decode(returnDataCall, (bytes32, uint32, uint32, uint192, uint192, uint32, int192, int192, int192));
-
-        // Decode the reportData from verifyReportRequest
-        (, bytes memory reportData) = abi.decode(verifyReportRequest, (bytes32[3], bytes));
-
-        // Extract report version from reportData
-        uint16 reportVersion = (uint16(uint8(reportData[0])) << 8) | uint16(uint8(reportData[1]));
-
-        if (reportVersion != EXPECTED_VERSION) revert InvalidPriceFeedVersion(reportVersion);
 
         // Don't allow updating to an old price
         if (observationsTimestamp <= priceFeed.timestamp) revert OldPriceFeedUpdate();

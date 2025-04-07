@@ -6,27 +6,15 @@ import "../src/ChainlinkPriceFeed.sol";
 
 contract DeployProduction is Script {
     function run() external {
-        address verifierProxyAddress = 0x6733e9106094b0C794e8E0297c96611fF60460Bf;
+        address verifierProxyAddress = 0xd61ceB4521453F147C58d22879B4ec539331F851;
         address usdcAddress = 0x79A02482A880bCE3F13e09Da970dC34db4CD24d1;
         address pairAddress;
         bytes32 feedId;
         string memory pairName;
 
-        // Deploy WLD/USD
-        pairAddress = 0x2cFc85d8E48F8EAB294be644d9E25C3030863003;
-        feedId = 0x000365f820b0633946b78232bb91a97cf48100c426518e732465c3a050edb9f1;
-        pairName = "WLD/USD";
-        deployPriceFeed(pairAddress, usdcAddress, payable(verifierProxyAddress), feedId, pairName);
-
-        // Deploy ETH/USD
-        pairAddress = 0x4200000000000000000000000000000000000006;
-        feedId = 0x000362205e10b3a147d02792eccee483dca6c7b44ecce7012cb8c6e0b68b3ae9;
-        pairName = "ETH/USD";
-        deployPriceFeed(pairAddress, usdcAddress, payable(verifierProxyAddress), feedId, pairName);
-
         // Deploy BTC/USD
         pairAddress = 0x03C7054BCB39f7b2e5B2c7AcB37583e32D70Cfa3;
-        feedId = 0x00039d9e45394f473ab1f050a1b963e6b05351e52d71e507509ada0c95ed75b8;
+        feedId = 0x00037da06d56d083fe599397a4769a042d63aa73dc4ef57709d31e9971a5b439;
         pairName = "BTC/USD";
         deployPriceFeed(pairAddress, usdcAddress, payable(verifierProxyAddress), feedId, pairName);
     }
