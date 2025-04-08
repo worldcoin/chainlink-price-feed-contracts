@@ -29,16 +29,16 @@ contract ChainlinkPriceFeed {
     address public immutable USDC_TOKEN_ADDRESS;
 
     // Address of the VerifierProxy contract
-    IVerifierProxy public VERIFIER_PROXY;
+    IVerifierProxy public immutable VERIFIER_PROXY;
 
     // The unique identifier for this price feed
     bytes32 public immutable FEED_ID;
 
-    // Human-readable name of the pair (e.g., "WLD/USD")
-    string public PAIR_NAME;
-
     // Expected version of the report
     uint16 public immutable EXPECTED_VERSION = 3;
+
+    // Human-readable name of the pair (e.g., "WLD/USD")
+    string public PAIR_NAME;
 
     // Price feed data for the single pair
     PriceFeedData public priceFeed;
