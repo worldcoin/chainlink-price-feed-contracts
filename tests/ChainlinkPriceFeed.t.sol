@@ -17,7 +17,7 @@ contract ChainlinkPriceFeedTest is Test {
     function setUp() public {
         verifier = new MockChainlinkVerifier();
         priceFeed = new ChainlinkPriceFeed(
-            PAIR_TOKEN_ADDRESS, USDC_TOKEN_ADDRESS, payable(address(verifier)), FEED_ID, PAIR_NAME
+            PAIR_TOKEN_ADDRESS, USDC_TOKEN_ADDRESS, payable(address(verifier)), FEED_ID, PAIR_NAME, 18
         );
     }
 
@@ -45,7 +45,7 @@ contract ChainlinkPriceFeedTest is Test {
         bytes32 invalidFeedId = 0x1103d338ea2ac3be9e026033b1aa601673c37bab5e13851c59966f9f820754d6;
 
         ChainlinkPriceFeed invalidPriceFeedId = new ChainlinkPriceFeed(
-            PAIR_TOKEN_ADDRESS, USDC_TOKEN_ADDRESS, payable(address(verifier)), invalidFeedId, PAIR_NAME
+            PAIR_TOKEN_ADDRESS, USDC_TOKEN_ADDRESS, payable(address(verifier)), invalidFeedId, PAIR_NAME, 18
         );
 
         // Set the block timestamp between expireAt and validFromTimestamp

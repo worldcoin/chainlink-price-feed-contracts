@@ -16,19 +16,19 @@ contract DeployProduction is Script {
         pairAddress = 0x2cFc85d8E48F8EAB294be644d9E25C3030863003;
         feedId = 0x000365f820b0633946b78232bb91a97cf48100c426518e732465c3a050edb9f1;
         pairName = "WLD/USD";
-        deployPriceFeed(pairAddress, usdcAddress, payable(verifierProxyAddress), feedId, pairName);
+        deployPriceFeed(pairAddress, usdcAddress, payable(verifierProxyAddress), feedId, pairName, 18);
 
         // Deploy ETH/USD
         pairAddress = 0x4200000000000000000000000000000000000006;
         feedId = 0x000362205e10b3a147d02792eccee483dca6c7b44ecce7012cb8c6e0b68b3ae9;
         pairName = "ETH/USD";
-        deployPriceFeed(pairAddress, usdcAddress, payable(verifierProxyAddress), feedId, pairName);
+        deployPriceFeed(pairAddress, usdcAddress, payable(verifierProxyAddress), feedId, pairName, 18);
 
         // Deploy BTC/USD
         pairAddress = 0x03C7054BCB39f7b2e5B2c7AcB37583e32D70Cfa3;
         feedId = 0x00039d9e45394f473ab1f050a1b963e6b05351e52d71e507509ada0c95ed75b8;
         pairName = "BTC/USD";
-        deployPriceFeed(pairAddress, usdcAddress, payable(verifierProxyAddress), feedId, pairName);
+        deployPriceFeed(pairAddress, usdcAddress, payable(verifierProxyAddress), feedId, pairName, 8);
     }
 
     function deployPriceFeed(
@@ -36,12 +36,13 @@ contract DeployProduction is Script {
         address usdcAddress,
         address verifierProxyAddress,
         bytes32 feedId,
-        string memory pairName
+        string memory pairName,
+        uint8 decimals
     )
         internal
     {
         vm.startBroadcast();
-        new ChainlinkPriceFeed(pairAddress, usdcAddress, payable(verifierProxyAddress), feedId, pairName);
+        new ChainlinkPriceFeed(pairAddress, usdcAddress, payable(verifierProxyAddress), feedId, pairName, decimals);
         vm.stopBroadcast();
     }
 }

@@ -15,6 +15,7 @@ contract ChainlinkPriceFeed {
     error PriceFeedExpired();
     error OldPriceFeedUpdate();
     error InvalidPriceFeedVersion(uint16 version);
+    error NotImplemented();
 
     struct PriceFeedData {
         int192 price;
@@ -40,6 +41,9 @@ contract ChainlinkPriceFeed {
     // Human-readable name of the pair (e.g., "WLD/USD")
     string public PAIR_NAME;
 
+    // Number of decimals for the price feed
+    uint8 public immutable DECIMALS;
+
     // Price feed data for the single pair
     PriceFeedData public priceFeed;
 
@@ -52,25 +56,29 @@ contract ChainlinkPriceFeed {
      * @param _verifierProxyAddress The address of the VerifierProxy contract
      * @param _feedId The unique identifier for this price feed
      * @param _pairName Human-readable name of the pair (e.g., "ETH/USD")
+     * @param _decimals Number of decimals for the price feed
      */
     constructor(
         address _pairAddress,
         address _usdcAddress,
         address payable _verifierProxyAddress,
         bytes32 _feedId,
-        string memory _pairName
+        string memory _pairName,
+        uint8 _decimals
     ) {
         if (_usdcAddress == address(0)) revert InvalidParameter("USDC_Address");
         if (_pairAddress == address(0)) revert InvalidParameter("Pair_Token_Address");
         if (_verifierProxyAddress == address(0)) revert InvalidParameter("Verifier_Proxy");
         if (_feedId == bytes32(0)) revert InvalidParameter("Feed_Id");
         if (bytes(_pairName).length == 0) revert InvalidParameter("Pair_Name");
+        if (_decimals == 0) revert InvalidParameter("Decimals");
 
         USDC_TOKEN_ADDRESS = _usdcAddress;
         PAIR_TOKEN_ADDRESS = _pairAddress;
         VERIFIER_PROXY = IVerifierProxy(_verifierProxyAddress);
         FEED_ID = _feedId;
         PAIR_NAME = _pairName;
+        DECIMALS = _decimals;
     }
 
     function updatePriceData(
@@ -144,5 +152,46 @@ contract ChainlinkPriceFeed {
         answeredInRound = priceFeed.timestamp;
 
         return (roundId, answer, startedAt, updatedAt, answeredInRound);
+    }
+
+    /**
+     * @dev Returns the description of the price feed
+     * @return The human-readable name of the pair (e.g., "WLD/USD")
+     */
+    function description() external view returns (string memory) {
+        return PAIR_NAME;
+    }
+
+    /**
+     * @dev Returns the version of the price feed
+     * @return The version number
+     */
+    function version() external pure returns (uint256) {
+        return 1;
+    }
+
+    /**
+     * @dev Returns the number of decimals for the price feed
+     * @return The number of decimals
+     */
+    function decimals() external view returns (uint8) {
+        return DECIMALS;
+    }
+
+    /**
+     * @dev Get historical price feed data for a specific round
+     * @param _roundId The round ID to get data for
+     * @return roundId The round ID
+     * @return answer The price
+     * @return startedAt The timestamp when the round started
+     * @return updatedAt The timestamp of the update
+     * @return answeredInRound The round ID in which the answer was computed
+     */
+    function getRoundData(uint80 _roundId)
+        external
+        view
+        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+    {
+        revert NotImplemented();
     }
 }
