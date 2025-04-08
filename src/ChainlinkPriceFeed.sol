@@ -13,7 +13,7 @@ contract ChainlinkPriceFeed {
     error PriceDataInvalid();
     error PriceFeedNotAvailable();
     error PriceFeedExpired();
-    error OldPriceFeedUpdate();
+    error OldPriceFeedUpdate(uint256 previousTimestamp, uint256 updateTimestamp);
     error InvalidPriceFeedVersion(uint16 version);
     error NotImplemented();
 
@@ -113,7 +113,9 @@ contract ChainlinkPriceFeed {
         ) = abi.decode(returnDataCall, (bytes32, uint32, uint32, uint192, uint192, uint32, int192, int192, int192));
 
         // Don't allow updating to an old price
-        if (observationsTimestamp <= priceFeed.timestamp) revert OldPriceFeedUpdate();
+        if (observationsTimestamp < priceFeed.timestamp) {
+            revert OldPriceFeedUpdate(priceFeed.timestamp, observationsTimestamp);
+        }
 
         // Verify that the feed ID matches the contract's feed ID
         if (receivedFeedId != FEED_ID) revert FeedIdMismatch();

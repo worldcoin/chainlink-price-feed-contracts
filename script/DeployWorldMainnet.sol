@@ -28,7 +28,13 @@ contract DeployProduction is Script {
         pairAddress = 0x03C7054BCB39f7b2e5B2c7AcB37583e32D70Cfa3;
         feedId = 0x00039d9e45394f473ab1f050a1b963e6b05351e52d71e507509ada0c95ed75b8;
         pairName = "BTC/USD";
-        deployPriceFeed(pairAddress, usdcAddress, payable(verifierProxyAddress), feedId, pairName, 8);
+        deployPriceFeed(pairAddress, usdcAddress, payable(verifierProxyAddress), feedId, pairName, 18);
+
+        // Deploy USDC/USD
+        pairAddress = usdcAddress;
+        feedId = 0x00038f83323b6b08116d1614cf33a9bd71ab5e0abf0c9f1b783a74a43e7bd992;
+        pairName = "USDC/USD";
+        deployPriceFeed(pairAddress, usdcAddress, payable(verifierProxyAddress), feedId, pairName, 18);
     }
 
     function deployPriceFeed(
