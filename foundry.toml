@@ -14,6 +14,7 @@
   solc = "0.8.28"
   src = "src"
   test = "tests"
+libs = ["node_modules", "lib"]
 
 [profile.ci]
   fuzz = { runs = 10_000 }
@@ -43,3 +44,4 @@
   optimism = "https://optimism-rpc.publicnode.com"
   polygon = "https://polygon-bor-rpc.publicnode.com"
   sepolia = "https://ethereum-sepolia-rpc.publicnode.com"
+  world-sepolia = "https://4801.rpc.thirdweb.com"
