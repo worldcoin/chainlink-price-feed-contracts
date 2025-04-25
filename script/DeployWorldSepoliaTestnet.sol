@@ -2,7 +2,7 @@
 pragma solidity >=0.8.28;
 
 import "forge-std/src/Script.sol";
-import "../src/ChainlinkPriceFeed.sol";
+import "../src/ChainlinkPriceFeedUSD.sol";
 
 contract DeployProduction is Script {
     function run() external {
