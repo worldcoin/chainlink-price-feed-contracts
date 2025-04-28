@@ -36,7 +36,7 @@ contract ChainlinkPriceFeed {
     bytes32 public immutable FEED_ID;
 
     // Expected version of the report
-    uint16 public immutable EXPECTED_VERSION = 3;
+    uint16 public immutable EXPECTED_VERSION = 2;
 
     // Human-readable name of the pair (e.g., "WLD/USD")
     string public PAIR_NAME;
@@ -108,9 +108,8 @@ contract ChainlinkPriceFeed {
             ,
             ,
             uint32 expiresAt,
-            int192 price,
-            ,
-        ) = abi.decode(returnDataCall, (bytes32, uint32, uint32, uint192, uint192, uint32, int192, int192, int192));
+            int192 price
+        ) = abi.decode(returnDataCall, (bytes32, uint32, uint32, uint192, uint192, uint32, int192));
 
         // Don't allow updating to an old price
         if (observationsTimestamp < priceFeed.timestamp) {

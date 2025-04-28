@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.28;
 
-import "../src/ChainlinkPriceFeedUSD.sol";
+import "forge-std/src/Test.sol";
+import "../src/ChainlinkPriceFeedv3.sol";
 import "../tests/mocks/MockChainlinkVerifier.sol";
 
 contract ChainlinkPriceFeedTest is Test {
@@ -26,14 +27,14 @@ contract ChainlinkPriceFeedTest is Test {
         bytes memory parameterPayload = "";
 
         // Set the block timestamp between expireAt and validFromTimestamp
-        vm.warp(1_745_544_389);
+        vm.warp(1745544389);
 
         priceFeed.updatePriceData(verifyReportRequest, parameterPayload);
 
         // Fetch the current price
         (, int256 answer,,,) = priceFeed.latestRoundData();
         // 138.12
-        assertEq(answer, 918_981_748_278_172_600);
+        assertEq(answer, 918981748278172600);
     }
 
     function testInvalidFeedId() public {
@@ -46,8 +47,8 @@ contract ChainlinkPriceFeedTest is Test {
         ChainlinkPriceFeed invalidPriceFeedId = new ChainlinkPriceFeed(
             PAIR_TOKEN_ADDRESS, USDC_TOKEN_ADDRESS, payable(address(verifier)), invalidFeedId, PAIR_NAME, 18
         );
-        // Set the block timestamp between expireAt and validFromTimestamp
-        vm.warp(1_745_544_389);
+                // Set the block timestamp between expireAt and validFromTimestamp
+        vm.warp(1745544389);
 
         // Expect revert due to feed ID mismatch
         vm.expectRevert(ChainlinkPriceFeed.FeedIdMismatch.selector);
@@ -60,7 +61,7 @@ contract ChainlinkPriceFeedTest is Test {
         bytes memory parameterPayload = "";
 
         // Set the block timestamp after the expiration
-        vm.warp(1_748_136_391);
+        vm.warp(1748136391);
 
         // Expect revert due to expired data
         vm.expectRevert(ChainlinkPriceFeed.PriceDataInvalid.selector);
@@ -119,7 +120,7 @@ contract ChainlinkPriceFeedTest is Test {
         bytes memory verifyReportRequest = abi.encode([one, two, three], reportData);
 
         // Set the block timestamp between expireAt and validFromTimestamp
-        vm.warp(1_745_544_389);
+        vm.warp(1745544389);
 
         // Expect revert due to invalid report version
         vm.expectRevert(abi.encodeWithSelector(ChainlinkPriceFeed.InvalidPriceFeedVersion.selector, uint16(4)));
